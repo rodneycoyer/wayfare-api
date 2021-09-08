@@ -1,5 +1,4 @@
 const express = require("express");
-const { response } = require("../app");
 const Location = require("../models/locationModel");
 
 const locationRouter = express.Router();
@@ -15,7 +14,7 @@ locationRouter.route("/")
     })
     .catch(err => next(err));
 })
-// create new
+// create new location
 .post((req, res, next) => {
     Location.create(req.body)
     .then(location => {
@@ -26,7 +25,7 @@ locationRouter.route("/")
     })
     .catch(err => next(err));
 })
-// update not allowed
+// update all not allowed
 .put((req, res) => {
     res.statusCode = 403;
     res.end("PUT operation not supported on /locations");

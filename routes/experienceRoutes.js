@@ -1,46 +1,87 @@
 const express = require("express");
+const Experience = require("../models/experienceModel");
+
 const experienceRouter = express.Router();
 
 experienceRouter.route("/")
-.all((req, res, next) => {
-    res.statusCode = 200;
-    res.setHeader("Content-Type", "text/html");
-    next();
+// get all
+.get((req, res, next) => {
+    Experience.find()
+    .then(experiences => {
+        res.statusCode = 200;
+        res.setHeader("Content-Type", "application/json");
+        res.json(experiences);
+    })
+    .catch(err => next(err));
 })
-.get((req, res) => {
-    res.end("Sending all experiences your way");
+
+// create new experience
+.post((req, res, next) => {
+    Experience.create(req.body)
+    .then(experience => {
+        res.statusCode = 200;
+        res.setHeader("Content-Type", "application/json");
+        res.json(experience);
+    })
+    .catch(err => next(err));
 })
-.post((req, res) => {
-    res.end(`Will add the experience : ${req.body.name} with description of : ${req.body.description}`)
-})
+
+// update all not allowed
 .put((req, res) => {
     res.statusCode = 403;
     res.end("PUT operations not supported on /experiences");
 })
 .delete((req, res) => {
-    res.end("Deleting all experiences");
+    Experience.deleteMany()
+    .then(response => {
+        res.statusCode = 200;
+        res.setHeader("Content-Type", "application/json");
+        res.json(response);
+    })
+    .catch(err => next(err));
 });
 
-experienceRouter.route("/:experienceID")
-.all((req, res, next) => {
-    res.statusCode = 200;
-    res.setHeader("Content-Type", "text/html");
-    next();
+// get experience by id
+experienceRouter.route("/:experienceId")
+.get((req, res, next) => {
+    Experience.findById(req.params.experienceId)
+    .then(experience => {
+        res.statusCode = 200;
+        res.setHeader("Content-Type", "application/json");
+        res.json(experience);
+    })
+    .catch(err => next(err));
 })
-.get((req, res) => {
-    res.end(`Sending details of experience: ${req.params.experienceID} shortly`);
-})
+
+// create not allowed in this path
 .post((req, res) => {
     res.statusCode = 403;
-    res.end(`POST operation not supported on /experiences/${req.params.experienceID}`);
+    res.end(`POST operation not supported on /experiences/${req.params.experienceId}`);
 })
-.put((req, res) => {
-    res.write(`Updating experience : ${req.params.experienceID}\n`);
-    res.end(`Will update : ${req.body.name}
-        with description of : ${req.body.description}`);
+
+// update by id
+.put((req, res, next) => {
+    Experience.findByIdAndUpdate(req.params.experienceId,
+        { $set: req.body },
+        { new:true }
+    )
+    .then(experience => {
+        res.statusCode = 200;
+        res.setHeader("Content-Type", "application/json");
+        res.json(experience);
+    })
+    .catch(err => next(err));
 })
-.delete((req, res) => {
-    res.end(`Deleting experience : ${req.params.experienceID}`);
+
+// delete by id
+.delete((req, res, next) => {
+    Experience.findByIdAndDelete(req.params.experienceId)
+    .then(response => {
+        res.statusCode = 200;
+        res.setHeader("Content-Type", "application/json");
+        res.json(response);
+    })
+    .catch(err => next(err));
 });
 
 module.exports = experienceRouter;
