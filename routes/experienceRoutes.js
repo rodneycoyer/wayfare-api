@@ -1,5 +1,4 @@
 const express = require("express");
-// express router
 const experienceRouter = express.Router();
 
 experienceRouter.route("/")

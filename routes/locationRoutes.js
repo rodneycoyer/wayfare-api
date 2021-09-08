@@ -1,47 +1,85 @@
 const express = require("express");
+const { response } = require("../app");
+const Location = require("../models/locationModel");
+
 const locationRouter = express.Router();
 
 locationRouter.route("/")
-.all((req, res, next) => {
-    res.statusCode = 200;
-    res.setHeader("Content-Type", "text/html");
-    next();
+// get all
+.get((req, res, next) => {
+    Location.find()
+    .then(locations => {
+        res.statusCode = 200;
+        res.setHeader("Content-Type", "application/json");
+        res.json(locations);
+    })
+    .catch(err => next(err));
 })
-.get((req, res) => {
-    res.end("Will send all locations to you");
+// create new
+.post((req, res, next) => {
+    Location.create(req.body)
+    .then(location => {
+        console.log("Location Created ", location);
+        res.statusCode = 200;
+        res.setHeader("Content-Type", "application/json");
+        res.json(location);
+    })
+    .catch(err => next(err));
 })
-.post((req, res) => {
-    res.end(`Will add the location : ${req.body.name} with description ${req.body.description}`);
-})
+// update not allowed
 .put((req, res) => {
     res.statusCode = 403;
     res.end("PUT operation not supported on /locations");
 })
-.delete((req, res) => {
-    res.end("Deleting ALL locations");
+// delete all
+.delete((req, res, next) => {
+    Location.deleteMany()
+    .then(response => {
+        res.statusCode = 200;
+        res.setHeader("Content-Type", "application/json");
+        res.json(response);
+    })
+    .catch(err => next(err));
 });
 
-// locationID stored in req.params.locationID
-locationRouter.route("/:locationID")
-.all((req, res, next) => {
-    res.statusCode = 200;
-    res.setHeader("Content-Type", "text/html");
-    next();
+
+locationRouter.route("/:locationId")
+// get by id
+.get((req, res, next) => {
+    Location.findById(req.params.locationId)
+    .then(location => {
+        res.statusCode = 200;
+        res.setHeader("Content-Type", "application/json");
+        res.json(location);
+    })
+    .catch(err => next(err));
 })
-.get((req, res) => {
-    res.end(`Will send details of location : ${req.params.locationID}`);
-})
+// POST not allowed in this route
 .post((req, res) => {
     res.statusCode = 403;
-    res.end(`POST operation not supported on /locations/${req.params.locationID}`);
+    res.end(`POST operation not supported on /locations/${req.params.locationId}`);
 })
-.put((req, res) => {
-    res.write(`Updating location : ${req.params.locationID}\n`);
-    res.end(`Will update location : ${req.body.name}
-        with description : ${req.body.description}`);
+// update by id
+.put((req, res, next) => {
+    Location.findByIdAndUpdate(req.params.locationId, {
+        $set: req.body
+    }, { new: true })
+    .then(location => {
+        res.statusCode = 200;
+        res.setHeader("Content-Type", "application/json");
+        res.json(location);
+    })
+    .catch(err => next(err));
 })
-.delete((req, res) => {
-    res.end(`Deleting location : ${req.params.locationID}`);
+// delete by id
+.delete((req, res, next) => {
+    Location.findByIdAndDelete(req.params.locationId)
+    .then(response => {
+        res.statusCode = 200;
+        res.setHeader("Content-Type", "application/json");
+        res.json(response);
+    })
+    .catch(err => next(err));
 });
 
 module.exports = locationRouter;
