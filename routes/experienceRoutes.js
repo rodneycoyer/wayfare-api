@@ -55,7 +55,6 @@ experienceRouter.route("/:experienceId")
     res.statusCode = 403;
     res.end(`POST operation not supported on /experiences/${req.params.experienceId}`);
 })
-
 // update by id
 .put((req, res, next) => {
     Experience.findByIdAndUpdate(req.params.experienceId,
@@ -69,7 +68,6 @@ experienceRouter.route("/:experienceId")
     })
     .catch(err => next(err));
 })
-
 // delete by id
 .delete((req, res, next) => {
     Experience.findByIdAndDelete(req.params.experienceId)

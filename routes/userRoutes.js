@@ -1,46 +1,85 @@
 const express = require("express");
+const User = require("../models/userModel");
+
 const userRouter = express.Router();
 
 userRouter.route("/")
-.all((req, res, next) => {
-    res.statusCode = 200;
-    res.setHeader("Content-Type", "text/html");
-    next();
+// get all users
+.get((req, res, next) => {
+    User.find()
+    .then(users => {
+        res.statusCode = 200;
+        res.setHeader("Content-Type", "application/json");
+        res.json(users);
+    })
+    .catch(err => next(err));
 })
-.get((req, res) => {
-    res.end("sending all users over shortly");
+// create new user
+.post((req, res, next) => {
+    User.create(req.body)
+    .then(user => {
+        console.log("New User Created", user);
+        res.statusCode = 200;
+        res.setHeader("Content-Type", "application/json");
+        res.json(user);
+    })
+    .catch(err => next(err));
 })
-.post((req, res) => {
-    res.end(`adding user : ${req.body.name} with description of : ${req.body.description}`);
-})
+// update all not allowed
 .put((req, res) => {
     res.statusCode = 403;
     res.end("PUT operation not supported on /users");
 })
-.delete((req, res) => {
-    res.end("Deleting all users");
+// delete all users
+.delete((req, res, next) => {
+    User.deleteMany()
+    .then(response => {
+        res.statusCode = 200;
+        res.setHeader("Content-Type", "application/json");
+        res.json(response);
+    })
+    .catch(err => next(err));
 });
 
-// userID stored in req.params.userID
-userRouter.route("/:userID")
-.all((req, res, next) => {
-    res.statusCode = 200;
-    res.setHeader("Content-Type", "text/html");
-    next();
+
+userRouter.route("/:userId")
+// get user by id
+.get((req, res, next) => {
+    User.findById(req.params.userId)
+    .then(user => {
+        res.statusCode = 200;
+        res.setHeader("Content-Type", "application/json");
+        res.json(user);
+    })
+    .catch(err => next(err));
 })
-.get((req, res) => {
-    res.end(`getting details for user : ${req.params.userID}`);
-})
+// POST not allowed in this route
 .post((req, res) => {
     res.statusCode = 403;
-    res.end(`POST operations not supported for /users/${req.params.userID}`);
+    res.end(`POST operations not supported for /users/${req.params.userId}`);
 })
-.put((req, res) => {
-    res.write(`Updating user : ${req.params.userID}\n`);
-    res.end(`Updating details for user : ${req.body.name} with description of : ${req.body.description}`);
+// update user by id
+.put((req, res, next) => {
+    User.findByIdAndUpdate(req.params.userId,
+        {$set: req.body},
+        {new: true}
+    )
+    .then(user => {
+        res.statusCode = 200;
+        res.setHeader("Content-Type", "application/json");
+        res.json(user);
+    })
+    .catch(err => next(err));
 })
-.delete((req, res) => {
-    res.end(`Deleting user : ${req.params.userID}`);
+// delete user by id
+.delete((req, res, next) => {
+    User.findByIdAndDelete(req.params.userId)
+    .then(response => {
+        res.statusCode = 200;
+        res.setHeader("Content-Type", "application/json");
+        res.json(response);
+    })
+    .catch(err => next(err));
 });
 
 module.exports = userRouter;
