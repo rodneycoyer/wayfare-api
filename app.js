@@ -23,6 +23,7 @@ connect.then(() => console.log(`Connected correctly to server ${url}`),
 const indexRouter = require('./routes/index');
 const experienceRouter = require('./routes/experienceRoutes');
 const locationRouter = require('./routes/locationRoutes');
+const productRouter = require('./routes/productRoutes');
 const userRouter = require('./routes/userRoutes');
 
 // call express class methods
@@ -47,6 +48,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/', indexRouter);
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/experiences', experienceRouter);
+app.use('/api/v1/products', productRouter);
 app.use('/api/v1/locations', locationRouter);
 
 // catch 404 and forward to error handler

@@ -14,7 +14,6 @@ experienceRouter.route("/")
     })
     .catch(err => next(err));
 })
-
 // create new experience
 .post((req, res, next) => {
     Experience.create(req.body)
@@ -25,12 +24,12 @@ experienceRouter.route("/")
     })
     .catch(err => next(err));
 })
-
 // update all not allowed
 .put((req, res) => {
     res.statusCode = 403;
     res.end("PUT operations not supported on /experiences");
 })
+// delete all experiences
 .delete((req, res) => {
     Experience.deleteMany()
     .then(response => {
@@ -40,7 +39,6 @@ experienceRouter.route("/")
     })
     .catch(err => next(err));
 });
-
 // get experience by id
 experienceRouter.route("/:experienceId")
 .get((req, res, next) => {
@@ -52,7 +50,6 @@ experienceRouter.route("/:experienceId")
     })
     .catch(err => next(err));
 })
-
 // create not allowed in this path
 .post((req, res) => {
     res.statusCode = 403;
