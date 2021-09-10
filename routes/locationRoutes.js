@@ -4,7 +4,7 @@ const Location = require("../models/locationModel");
 const locationRouter = express.Router();
 
 locationRouter.route("/")
-// get all
+// list all
 .get((req, res, next) => {
     Location.find()
     .then(locations => {

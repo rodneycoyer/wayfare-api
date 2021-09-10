@@ -43,7 +43,7 @@ productRouter.route("/")
 });
 
 productRouter.route("/:productId")
-// get product by id
+// list product by id
 .get((req, res, next) => {
     Product.findById(req.params.productId)
     .then(product => {

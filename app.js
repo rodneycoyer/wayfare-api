@@ -3,18 +3,18 @@ const express = require('express');
 const path = require('path');
 const cookieParser = require('cookie-parser');
 const logger = require('morgan');
-
-// wrap mongoose around MongoDB server
 const mongoose = require('mongoose');
+require('dotenv').config();
 
-const url = 'mongodb://localhost:27017/nucampsite';
+// wrap mongoose around local MongoDB dev server
+const {MONGO_URI, MONGO_USERNAME} = process.env;
+const url = `${MONGO_URI}/${MONGO_USERNAME}`;
 const connect = mongoose.connect(url, {
     useCreateIndex: true,
     useFindAndModify: false,
-    useNewUrlParser: true, 
+    useNewUrlParser: true,
     useUnifiedTopology: true
 });
-
 connect.then(() => console.log(`Connected correctly to server ${url}`),
     err => console.log(err)
 );
@@ -34,9 +34,10 @@ app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
 
 // morgan logger
+// TODO: Look at process.env node environment vs "dev" vs "prod"
 app.use(logger('dev'));
 
-// parse
+// parse req.body
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
@@ -45,7 +46,7 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // router routes
-app.use('/', indexRouter);
+app.use('/api/v1/', indexRouter);
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/experiences', experienceRouter);
 app.use('/api/v1/products', productRouter);
