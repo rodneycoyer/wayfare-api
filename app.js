@@ -1,14 +1,23 @@
 const createError = require('http-errors');
 const express = require('express');
 const path = require('path');
-const cookieParser = require('cookie-parser');
 const logger = require('morgan');
 const mongoose = require('mongoose');
+const passport = require("passport");
+
+// env app state and secrets
+const config = require("./config");
 require('dotenv').config();
 
-// wrap mongoose around local MongoDB dev server
-const {MONGO_URI, MONGO_USERNAME} = process.env;
-const url = `${MONGO_URI}/${MONGO_USERNAME}`;
+// route imports
+const indexRouter = require('./routes/index');
+const experienceRouter = require('./routes/experienceRoutes');
+const locationRouter = require('./routes/locationRoutes');
+const productRouter = require('./routes/productRoutes');
+const userRouter = require('./routes/userRoutes');
+
+// wrap mongoose around local MongoDB dev server and listen for response
+const url = config.mongoUrl;
 const connect = mongoose.connect(url, {
     useCreateIndex: true,
     useFindAndModify: false,
@@ -18,13 +27,6 @@ const connect = mongoose.connect(url, {
 connect.then(() => console.log(`Connected correctly to server ${url}`),
     err => console.log(err)
 );
-
-// route imports
-const indexRouter = require('./routes/index');
-const experienceRouter = require('./routes/experienceRoutes');
-const locationRouter = require('./routes/locationRoutes');
-const productRouter = require('./routes/productRoutes');
-const userRouter = require('./routes/userRoutes');
 
 // call express class methods
 const app = express();
@@ -40,14 +42,18 @@ app.use(logger('dev'));
 // parse req.body
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
+
+// auth session with passport as req.user
+app.use(passport.initialize());
+
+// no auth needed to access
+app.use('/api/v1/', indexRouter);
+app.use('/api/v1/users', userRouter);
 
 // serve static files from public
 app.use(express.static(path.join(__dirname, 'public')));
 
-// router routes
-app.use('/api/v1/', indexRouter);
-app.use('/api/v1/users', userRouter);
+// auth required to access
 app.use('/api/v1/experiences', experienceRouter);
 app.use('/api/v1/products', productRouter);
 app.use('/api/v1/locations', locationRouter);
