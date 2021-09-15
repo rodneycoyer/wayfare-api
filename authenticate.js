@@ -5,6 +5,7 @@ const JwtStrategy = require("passport-jwt").Strategy;
 const ExtractJwt = require("passport-jwt").ExtractJwt;
 const jwt = require("jsonwebtoken");
 
+// dev env secrets
 const config = require("./config");
 
 // implement local strategy
@@ -42,9 +43,11 @@ exports.jwtPassport = passport.use(
     )
 );
 
+// verify token
 exports.verifyUser = passport.authenticate("jwt", {session: false});
 
-exports.verifyAdmin = (req, req, next) => {
+// check if admin
+exports.verifyAdmin = (req, res, next) => {
     if (req.user.admin) {
         return next();
     } else {
