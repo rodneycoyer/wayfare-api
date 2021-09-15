@@ -7,7 +7,6 @@
 const app = require('../app');
 const debug = require('debug')('wayfareserver:server');
 const http = require('http');
-
 const https = require("https")
 const fs = require("fs");
 
@@ -15,7 +14,7 @@ const fs = require("fs");
  * Get port from environment and store in Express.
  */
 
-var port = normalizePort(process.env.PORT || '3000');
+const port = normalizePort(process.env.PORT || '3000');
 app.set('port', port);
 // https port variable
 app.set("secPort", port+443);
@@ -24,7 +23,7 @@ app.set("secPort", port+443);
  * Create HTTP server.
  */
 
-var server = http.createServer(app);
+const server = http.createServer(app);
 
 /**
  * Listen on provided port, on all network interfaces.

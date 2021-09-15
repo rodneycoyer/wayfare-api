@@ -1,12 +1,15 @@
 const express = require("express");
 const Location = require("../models/locationModel");
 const authenticate = require("../authenticate");
+const cors = require("./cors"); // cors module
 
 const locationRouter = express.Router();
 
 locationRouter.route("/")
+// preflight request
+.options(cors.corsWithOptions, (req, res) => res.sendStatus(200))
 // list all
-.get((req, res, next) => {
+.get(cors.cors, (req, res, next) => {
     Location.find()
     .populate("comments.author")
     .then(locations => {
@@ -17,7 +20,7 @@ locationRouter.route("/")
     .catch(err => next(err));
 })
 // create new location
-.post(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+.post(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     Location.create(req.body)
     .then(location => {
         console.log("Location Created ", location);
@@ -28,12 +31,12 @@ locationRouter.route("/")
     .catch(err => next(err));
 })
 // update all not allowed
-.put(authenticate.verifyUser, (req, res) => {
+.put(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res) => {
     res.statusCode = 403;
     res.end("PUT operation not supported on /locations");
 })
 // delete all
-.delete(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+.delete(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     Location.deleteMany()
     .then(response => {
         res.statusCode = 200;
@@ -45,8 +48,9 @@ locationRouter.route("/")
 
 
 locationRouter.route("/:locationId")
+.options(cors.corsWithOptions, (req, res) => res.sendStatus(200))
 // get by id
-.get((req, res, next) => {
+.get(cors.cors, (req, res, next) => {
     Location.findById(req.params.locationId)
     .populate("comments.author")
     .then(location => {
@@ -57,12 +61,12 @@ locationRouter.route("/:locationId")
     .catch(err => next(err));
 })
 // POST not allowed in this route
-.post(authenticate.verifyUser, (req, res) => {
+.post(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res) => {
     res.statusCode = 403;
     res.end(`POST operation not supported on /locations/${req.params.locationId}`);
 })
 // update by id
-.put(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+.put(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     Location.findByIdAndUpdate(req.params.locationId, {
         $set: req.body
     }, { new: true })
@@ -74,7 +78,7 @@ locationRouter.route("/:locationId")
     .catch(err => next(err));
 })
 // delete by id
-.delete(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+.delete(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     Location.findByIdAndDelete(req.params.locationId)
     .then(response => {
         res.statusCode = 200;
@@ -89,8 +93,9 @@ locationRouter.route("/:locationId")
 //
 
 locationRouter.route("/:locationId/comments")
+.options(cors.corsWithOptions, (req, res) => res.sendStatus(200))
 // get comments by locationId
-.get((req, res, next) => {
+.get(cors.cors, (req, res, next) => {
     Location.findById(req.params.locationId)
     .populate("comments.author")
     .then(location => {
@@ -107,7 +112,7 @@ locationRouter.route("/:locationId/comments")
     .catch(err => next(err));
 })
 // create new comment in locationId
-.post(authenticate.verifyUser, (req, res, next) => {
+.post(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
     Location.findById(req.params.locationId)
     .then(location => {
         if(location) {
@@ -129,14 +134,14 @@ locationRouter.route("/:locationId/comments")
     .catch(err => next(err));
 })
 // update all comments not allowed
-.put(authenticate.verifyUser, (req, res) => {
+.put(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res) => {
     res.statusCode = 403;
     res.end(`PUT operation not supported on /api/v1/locations/
         ${req.params.locationId}/comments`
     );
 })
 // delete all comments in locationId
-.delete(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+.delete(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     Location.findById(req.params.locationId)
     .then(location => {
         if(location) {
@@ -164,8 +169,9 @@ locationRouter.route("/:locationId/comments")
 //
 
 locationRouter.route("/:locationId/comments/:commentId")
+.options(cors.corsWithOptions, (req, res) => res.sendStatus(200))
 // get commentId by locationId
-.get((req, res, next) => {
+.get(cors.cors, (req, res, next) => {
     Location.findById(req.params.locationId)
     .populate("comments.author")
     .then(location => {
@@ -186,14 +192,14 @@ locationRouter.route("/:locationId/comments/:commentId")
     .catch(err => next(err));
 })
 // create new comment comment in experienceId not allowed
-.post(authenticate.verifyUser, (req, res) => {
+.post(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res) => {
     res.statusCode = 403;
     res.end(`POST operation not supported on
         /api/v1/locations/${req.params.locationId}/comments/${req.params.commentId}`
     );
 })
 // update commentId
-.put(authenticate.verifyUser, (req, res, next) => {
+.put(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
     Location.findById(req.params.locationId)
     .then(location => {
         if(location && location.comments.id(req.params.commentId)) {
@@ -229,7 +235,7 @@ locationRouter.route("/:locationId/comments/:commentId")
     .catch(err => next(err));
 })
 // delete commentId
-.delete(authenticate.verifyUser, (req, res, next) => {
+.delete(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
     Location.findById(req.params.locationId)
     .then(location => {
         if ((location.comments.id(req.params.commentId).author._id).equals(req.user._id)) {

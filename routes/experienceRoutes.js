@@ -1,12 +1,15 @@
 const express = require("express");
 const Experience = require("../models/experienceModel");
 const authenticate = require("../authenticate");
+const cors = require("./cors"); // cors module
 
 const experienceRouter = express.Router();
 
 experienceRouter.route("/")
+// preflight request
+.options(cors.corsWithOptions, (req, res) => res.sendStatus(200))
 // get all
-.get((req, res, next) => {
+.get(cors.cors, (req, res, next) => {
     Experience.find()
     .populate("comments.author")
     .then(experiences => {
@@ -17,7 +20,7 @@ experienceRouter.route("/")
     .catch(err => next(err));
 })
 // create new experience
-.post(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+.post(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     Experience.create(req.body)
     .then(experience => {
         res.statusCode = 200;
@@ -27,12 +30,12 @@ experienceRouter.route("/")
     .catch(err => next(err));
 })
 // update all not allowed
-.put(authenticate.verifyUser, (req, res) => {
+.put(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res) => {
     res.statusCode = 403;
     res.end("PUT operations not supported on /experiences");
 })
 // delete all experiences
-.delete(authenticate.verifyUser, authenticate.verifyAdmin, (req, res) => {
+.delete(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res) => {
     Experience.deleteMany()
     .then(response => {
         res.statusCode = 200;
@@ -43,7 +46,8 @@ experienceRouter.route("/")
 });
 // get experience by id
 experienceRouter.route("/:experienceId")
-.get((req, res, next) => {
+.options(cors.corsWithOptions, (req, res) => res.sendStatus(200))
+.get(cors.cors, (req, res, next) => {
     Experience.findById(req.params.experienceId)
     .populate("comments.author")
     .then(experience => {
@@ -54,12 +58,12 @@ experienceRouter.route("/:experienceId")
     .catch(err => next(err));
 })
 // create not allowed in this path
-.post(authenticate.verifyUser, (req, res) => {
+.post(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res) => {
     res.statusCode = 403;
     res.end(`POST operation not supported on /experiences/${req.params.experienceId}`);
 })
 // update by id
-.put(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+.put(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     Experience.findByIdAndUpdate(req.params.experienceId,
         { $set: req.body },
         { new:true }
@@ -72,7 +76,7 @@ experienceRouter.route("/:experienceId")
     .catch(err => next(err));
 })
 // delete by id
-.delete(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+.delete(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     Experience.findByIdAndDelete(req.params.experienceId)
     .then(response => {
         res.statusCode = 200;
@@ -87,8 +91,9 @@ experienceRouter.route("/:experienceId")
 //
 
 experienceRouter.route('/:experienceId/comments')
+.options(cors.corsWithOptions, (req, res) => res.sendStatus(200))
 // get all comments by experienceId
-.get((req, res, next) => {
+.get(cors.cors, (req, res, next) => {
     Experience.findById(req.params.experienceId)
     .populate("comments.author")
     .then(experience => {
@@ -105,7 +110,7 @@ experienceRouter.route('/:experienceId/comments')
     .catch(err => next(err));
 })
 // create new comment in experienceId
-.post(authenticate.verifyUser, (req, res, next) => {
+.post(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
     Experience.findById(req.params.experienceId)
     .then(experience => {
         if(experience) {
@@ -127,14 +132,14 @@ experienceRouter.route('/:experienceId/comments')
     .catch(err => next(err));
 })
 // update all comments not allowed
-.put(authenticate.verifyUser, (req, res) => {
+.put(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res) => {
     res.statusCode = 403;
     res.end(`PUT operation not supported on /api/v1/experiences/
         ${req.params.experienceId}/comments`
     );
 })
 // delete all comments by experienceId
-.delete(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+.delete(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     Experience.findById(req.params.experienceId)
     .then(experience => {
         if (experience) {
@@ -162,8 +167,9 @@ experienceRouter.route('/:experienceId/comments')
 //
 
 experienceRouter.route("/:experienceId/comments/:commentId")
+.options(cors.corsWithOptions, (req, res) => res.sendStatus(200))
 // get commentId by experienceId
-.get(authenticate.verifyUser, (req, res, next) => {
+.get(cors.cors, authenticate.verifyUser, (req, res, next) => {
     Experience.findById(req.params.experienceId)
     .populate("comments.author")
     .then(experience => {
@@ -184,14 +190,14 @@ experienceRouter.route("/:experienceId/comments/:commentId")
     .catch(err => next(err));
 })
 // create new comment in experienceId not allowed
-.post(authenticate.verifyUser, (req, res) => {
+.post(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res) => {
     res.statusCode = 403;
     res.end(`POST operation not supported on
         /api/v1/experiences/${req.params.experienceId}/comments/${req.params.commentId}`
     );
 })
 // update commentId
-.put(authenticate.verifyUser, (req, res, next) => {
+.put(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
     Experience.findById(req.params.experienceId)
     .then(experience => {
         if(experience && experience.comments.id(req.params.commentId)) {
@@ -227,7 +233,7 @@ experienceRouter.route("/:experienceId/comments/:commentId")
     .catch(err => next(err));
 })
 
-.delete(authenticate.verifyUser, (req, res, next) => {
+.delete(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
     Experience.findById(req.params.experienceId)
     .then(experience => {
         if ((experience.comments.id(req.params.commentId).author._id).equals(req.user._id)) {

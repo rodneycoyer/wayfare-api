@@ -1,12 +1,15 @@
 const express = require("express");
 const Product = require("../models/productModel");
 const authenticate = require("../authenticate");
+const cors = require("./cors"); // cors module
 
 const productRouter = express.Router();
 
 productRouter.route("/")
+// preflight request
+.options(cors.corsWithOptions, (req, res) => res.sendStatus(200))
 // get all products
-.get((req, res, next) => {
+.get(cors.cors, (req, res, next) => {
     Product.find()
     .populate("comments.author")
     .then(products => {
@@ -17,7 +20,7 @@ productRouter.route("/")
     .catch(err => next(err));
 })
 // create new product
-.post(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+.post(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     Product.create(req.body)
     .then(product => {
         console.log("Product Created", product);
@@ -28,12 +31,12 @@ productRouter.route("/")
     .catch(err => next(err));
 })
 // update all not allowed
-.put(authenticate.verifyUser, (req, res) => {
+.put(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res) => {
     res.statusCode = 403;
     res.end("PUT operation not supported on /products")
 })
 // delete all products
-.delete(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+.delete(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     Product.deleteMany()
     .then(response => {
         res.statusCode = 200;
@@ -47,7 +50,7 @@ productRouter.route("/")
 
 productRouter.route("/:productId")
 // list product by id
-.get((req, res, next) => {
+.get(cors.cors, (req, res, next) => {
     Product.findById(req.params.productId)
     .populate("comments.author")
     .then(product => {
@@ -58,12 +61,12 @@ productRouter.route("/:productId")
     .catch(err => next(err));
 })
 // POST not allowed in this route
-.post(authenticate.verifyUser, (req, res) => {
+.post(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res) => {
     res.statusCode = 403;
     res.end(`POST operation not supported on /products/${req.params.productId}`);
 })
 // update product by id
-.put(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+.put(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     Product.findByIdAndUpdate(req.params.productId,
         {$set: req.body},
         {new: true}
@@ -76,7 +79,7 @@ productRouter.route("/:productId")
     .catch(err => next(err));
 })
 // delete product by id
-.delete(authenticate.verifyUser, authenticate.verifyAdmin, (req, res) => {
+.delete(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res) => {
     Product.findByIdAndDelete(req.params.productId)
     .then(response => {
         res.statusCode = 200;
@@ -92,7 +95,7 @@ productRouter.route("/:productId")
 
 productRouter.route("/:productId/comments")
 // get comments by productId
-.get((req, res, next) => {
+.get(cors.cors, (req, res, next) => {
     Product.findById(req.params.productId)
     .populate("comments.author")
     .then(product => {
@@ -109,7 +112,7 @@ productRouter.route("/:productId/comments")
     .catch(err => next(err));
 })
 // create new comment in productId
-.post(authenticate.verifyUser, (req, res, next) => {
+.post(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
     Product.findById(req.params.productId)
     .then(product => {
         if(product) {
@@ -131,14 +134,14 @@ productRouter.route("/:productId/comments")
     .catch(err => next(err));
 })
 // update all comments not allowed
-.put(authenticate.verifyUser, (req, res) => {
+.put(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res) => {
     res.statusCode = 403;
     res.end(`PUT operation not supported on /api/v1/products/
         ${req.params.productId}/comments`
     );
 })
 // delete all comments in productId
-.delete(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+.delete(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     Product.findById(req.params.productId)
     .then(product => {
         if(product) {
@@ -167,7 +170,7 @@ productRouter.route("/:productId/comments")
 
 productRouter.route("/:productId/comments/:commentId")
 // get commentId by productId
-.get((req, res, next) => {
+.get(cors.cors, (req, res, next) => {
     Product.findById(req.params.productId)
     .populate("comments.author")
     .then(product => {
@@ -188,14 +191,14 @@ productRouter.route("/:productId/comments/:commentId")
     .catch(err => next(err));
 })
 // create new comment comment in productId not allowed
-.post(authenticate.verifyUser, (req, res) => {
+.post(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res) => {
     res.statusCode = 403;
     res.end(`POST operation not supported on
         /api/v1/products/${req.params.productId}/comments/${req.params.commentId}`
     );
 })
 // update commentId
-.put(authenticate.verifyUser, (req, res, next) => {
+.put(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
     Product.findById(req.params.productId)
     .then(product => {
         if(product && product.comments.id(req.params.commentId)) {
@@ -231,7 +234,7 @@ productRouter.route("/:productId/comments/:commentId")
     .catch(err => next(err));
 })
 // delete commentId
-.delete(authenticate.verifyUser, (req, res, next) => {
+.delete(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
     Product.findById(req.params.productId)
     .then(product => {
         if ((product.comments.id(req.params.commentId).author._id).equals(req.user._id)) {
@@ -261,9 +264,5 @@ productRouter.route("/:productId/comments/:commentId")
     })
     .catch(err => next(err));
 });
-
-
-
-
 
 module.exports = productRouter;
