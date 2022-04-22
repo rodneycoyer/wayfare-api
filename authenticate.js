@@ -7,25 +7,25 @@ const jwt = require("jsonwebtoken");
 const FacebookTokenStrategy = require("passport-facebook-token");
 
 // dev env secrets
-const config = require("./config");
+require("dotenv").config();
 
-// implement local strategy
+// passport.js local strategy
 exports.local = passport.use(new LocalStrategy(User.authenticate()));
-// used for sessions
+// create user with passport
 passport.serializeUser(User.serializeUser());
 passport.deserializeUser(User.deserializeUser());
 
 // create jwt that expires in 1 hr
 exports.getToken = user => {
-    return jwt.sign(user, config.secretKey, {expiresIn: 3600});
+    return jwt.sign(user, process.env.SECRET_KEY, {expiresIn: 3600});
 };
 
-// jwt strategy options with passport
+// jwt options - expect in req.header
 const options = {};
-options.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken(); // expect token in req.header
-options.secretOrKey = config.secretKey;
+options.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
+options.secretOrKey = process.env.SECRET_KEY;
 
-// verify function from jwt documentation
+// jwt authentication with passport
 exports.jwtPassport = passport.use(
     new JwtStrategy(
         options,
@@ -44,10 +44,10 @@ exports.jwtPassport = passport.use(
     )
 );
 
-// verify token
+// verify user jwt
 exports.verifyUser = passport.authenticate("jwt", {session: false});
 
-// check if admin
+// authenticate admin
 exports.verifyAdmin = (req, res, next) => {
     if (req.user.admin) {
         return next();
@@ -59,33 +59,33 @@ exports.verifyAdmin = (req, res, next) => {
 };
 
 // facebook O-Auth strategy
-exports.facebookPassport = passport.use(
-    new FacebookTokenStrategy(
-        {
-            clientID: config.facebook.clientId,
-            clientSecret: config.facebook.clientSecret
-        }, 
-        (accessToken, refreshToken, profile, done) => {
-            User.findOne({facebookId: profile.id}, (err, user) => {
-                if (err) {
-                    return done(err, false);
-                }
-                if (!err && user) {
-                    return done(null, user);
-                } else {
-                    user = new User({ username: profile.displayName });
-                    user.facebookId = profile.id;
-                    user.firstname = profile.name.givenName;
-                    user.lastname = profile.name.familyName;
-                    user.save((err, user) => {
-                        if (err) {
-                            return done(err, false);
-                        } else {
-                            return done(null, user);
-                        }
-                    });
-                }
-            });
-        }
-    )
-);
+// exports.facebookPassport = passport.use(
+//     new FacebookTokenStrategy(
+//         {
+//             clientID: process.env.FACEBOOK_ClientId,
+//             clientSecret: process.env.FACEBOOK_ClientSecret
+//         },
+//         (accessToken, refreshToken, profile, done) => {
+//             User.findOne({facebookId: profile.id}, (err, user) => {
+//                 if (err) {
+//                     return done(err, false);
+//                 }
+//                 if (!err && user) {
+//                     return done(null, user);
+//                 } else {
+//                     user = new User({ username: profile.displayName });
+//                     user.facebookId = profile.id;
+//                     user.firstname = profile.name.givenName;
+//                     user.lastname = profile.name.familyName;
+//                     user.save((err, user) => {
+//                         if (err) {
+//                             return done(err, false);
+//                         } else {
+//                             return done(null, user);
+//                         }
+//                     });
+//                 }
+//             });
+//         }
+//     )
+// );
